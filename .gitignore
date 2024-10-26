@@ -1,0 +1,10 @@
+# temp files
+temp/*
+
+# virtual environment and cache
+.venv/
+__pycache__/
+
+# Images
+/*.png
+!docs/*.png

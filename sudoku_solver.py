@@ -1,11 +1,7 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
-import shutil
 import operator
 import cv2
-import image_slicer
 from PIL import Image
 
 root = os.getcwd()
@@ -16,7 +12,7 @@ def imageProcessor(img_path):
     blur = cv2.GaussianBlur(gray, (5,5), 0)
     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
     contours,_ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    return image, gray, thresh, contours
+    return image, gray, contours
 
 def bestContours(image, contours):
     """ It will return the best contour among all possible contours to crop the sudoku grid from the image. """
@@ -73,7 +69,7 @@ def boxFinder(image, out):
     """ Here we find the four corners of the sudoku inside the image."""
     final = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    contours, h = cv2.findContours(out.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(out.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     polygon = contours[0]
 
@@ -104,34 +100,58 @@ def display_rects(in_img, rects, colour=255):
     for rect in rects:
         img = cv2.rectangle(img, tuple(int(x) for x in rect[0]), tuple(int(x) for x in rect[1]), colour)
     return img
-    
 
 def main(img_path):
     """ Here we split the sudoku grid into 81 cells after performing all the below preprocessing methods. """
 
-    image, gray, thresh, contours = imageProcessor(img_path)
+    image, gray, contours = imageProcessor(img_path)
     best_cnt = bestContours(image, contours)
     image,out = maskCreator(gray, best_cnt, image, contours)
     gray = boxFinder(image, out)
-    
+
     squares = infer_grid(gray)
     image = display_rects(gray, squares)
-    image1 = Image.fromarray(image)
-    image1.save('my.png')
-    a = image_slicer.slice('my.png', 81)
+    Image.fromarray(image).save('board.png')
 
-    if 'temp' in os.listdir():
-        shutil.rmtree('temp')
-    os.mkdir('temp')
-    for i,img in enumerate(sorted([file for file in os.listdir() if 'my_' in file])):
-        src, dst = os.path.join(root, img), os.path.join(root, 'temp')
-        shutil.move(src, dst)
-
-    for img_name in os.listdir('temp'):
-        if '.png' in img_name:
-            img = cv2.imread(os.path.join(root, 'temp', img_name))
-            img[img > 60] = 255
-            cv2.imwrite(os.path.join(root, 'temp', img_name), img)
+    cut_image_grid('board.png')
 
 def sudoku_solver(img_path):
     main(img_path)
+
+
+def cut_image_grid(image_path: str, output_folder: str = "temp", grid_size: int = 9):
+    # Load the image from the file
+    os.makedirs(output_folder, exist_ok=True)
+    image = cv2.imread(image_path)
+    if image is None:
+        raise ValueError("Image file not found or could not be opened.")
+
+    # Get image dimensions
+    height, width = image.shape[0], image.shape[1]
+    piece_height, piece_width = height // grid_size, width // grid_size
+
+    # Extract the base name from the image path (without extension)
+    base_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # Ensure output folder exists
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Iterate over grid positions and save each piece
+    for i in range(grid_size):
+        for j in range(grid_size):
+            y, x = i * piece_height, j * piece_width
+            h = y + piece_height if i < grid_size - 1 else height
+            w = x + piece_width if j < grid_size - 1 else width
+
+            # Crop the piece from the original image
+            piece = image[y:h, x:w]
+            piece[piece > 60] = 255
+
+            # Construct filename for each piece
+            piece_filename = f"{base_name}_{i+1:02}_{j+1:02}.png"
+            piece_path = os.path.join(output_folder, piece_filename)
+
+            # Save the image piece
+            cv2.imwrite(piece_path, piece)
+
+    print(f"Image pieces saved to {output_folder}")
