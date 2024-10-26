@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sudoku_solver"
+version = "1.0.0"
+description = ""
+authors = []
+dependencies = [
+    "pytesseract>=0.3.13",
+    "opencv-python>=4.10.0.84",
+]
+requires-python = ">= 3.12"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pre-commit>=4.0.1",
+    "deadcode>=2.4.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/python_template"]
+
+[tool.ruff]
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+
+[tool.ruff.lint]
+select = [
+  "A",     # builtins
+  "ASYNC", # Helps avoid blocking calls in async code
+  "B",     # bugbear
+  "C4",    # Comprehensions
+  # "C90",  # Complexity, disabled for now, will handle it separately
+  # "D",  # pydocstyle, disabled for now, will handle it separately
+  "DJ",   # django
+  "DTZ",  # datetime checks, sanity check on top of our own
+  "E",    # Errors
+  "ERA",  # Eradicate (commented out code)
+  "F",    # pyflakes
+  "FLY",  # flynt (enforce f-strings)
+  "G",    # logging format
+  "I",    # isort
+  "N",    # pep8-naming
+  "NPY",  # numpy
+  "PERF", # Perflint
+  "PGH",  # pygrep-hooks
+  "PIE",  # misc lints
+  "PL",   # pylint
+  "PT",   # pytest linting
+  "RET",  # Return
+  "RUF",  # Ruff-specific rules
+  "S",    # Bandit security
+  "SIM",  # Simplify
+  "TRY",  # exceptions handling
+  "UP",   # pyupgrade
+]
+
+ignore = [
+  "B007",
+  "B028",
+  "E501",
+  "E722",
+  "F403",
+  "F405",
+  "F821",
+  "N802",
+  "N812",
+  "N816",
+  "NPY002",
+  "RET504",
+  "S101",
+  "S311",
+  "SIM115",
+  "TRY003",
+  "PLR0912",
+  "PLR0913",
+  "PLR1704",
+  "PLR2004",
+  "UP008",
+  "UP038",
+]
+
+unfixable = [
+  "ERA", # Manual removal of those blocks to avoid false positives getting deleted
+]
